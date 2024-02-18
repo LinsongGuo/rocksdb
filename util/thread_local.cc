@@ -418,7 +418,6 @@ void ThreadLocalPtr::StaticMeta::Reset(uint32_t id, void* ptr) {
 
 void* ThreadLocalPtr::StaticMeta::Swap(uint32_t id, void* ptr) {
   auto* tls = GetThreadLocal();
-  // printf("tls size: %d\n", tls->entries.size());
   if (UNLIKELY(id >= tls->entries.size())) {
     // Need mutex to protect entries access within ReclaimId
     MutexLock l(Mutex());

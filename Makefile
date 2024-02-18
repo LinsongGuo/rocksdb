@@ -9,6 +9,8 @@
 BASH_EXISTS := $(shell which bash)
 SHELL := $(shell which bash)
 
+LLVM_VERSION = 11
+
 CLEAN_FILES = # deliberately empty, so we can append below.
 CFLAGS += ${EXTRA_CFLAGS}
 CXXFLAGS += ${EXTRA_CXXFLAGS}
@@ -20,8 +22,10 @@ STRIPFLAGS = -S -x
 # CFLAGS += -DROCKSDB_SUPPORT_THREAD_LOCAL=0
 # CXXFLAGS += -DROCKSDB_SUPPORT_THREAD_LOCAL=0
 
-CFLAGS += -muintr
-CXXFLAGS += -muintr
+# CFLAGS += -muintr
+# CXXFLAGS += -muintr
+# CFLAGS += -mavx512f
+# CXXFLAGS += -mavx512f
 
 # Transform parallel LOG output into something more readable.
 perl_command = perl -n \
@@ -369,6 +373,7 @@ util/build_version.cc: FORCE
 endif
 
 LIBOBJECTS = $(LIB_SOURCES:.cc=.o)
+LIBBC = $(LIB_SOURCES:.cc=.bc)
 ifeq ($(HAVE_POWER8),1)
 LIB_CC_OBJECTS = $(LIB_SOURCES:.cc=.o)
 LIBOBJECTS += $(LIB_SOURCES_C:.c=.o)
@@ -598,6 +603,11 @@ endif
 endif
 LIBRARY = ${LIBNAME}.a
 TOOLS_LIBRARY = ${LIBNAME}_tools.a
+LIBRARY_CONCORD = ${LIBNAME}_concord.a
+LIBCONCORD_LL = ${LIBNAME}_concord.opt.ll
+LIBOPT_LL = ${LIBNAME}.opt.ll
+LIBLL = ${LIBNAME}.ll
+LIBWHOLE_BC = ${LIBNAME}.bc
 
 ROCKSDB_MAJOR = $(shell egrep "ROCKSDB_MAJOR.[0-9]" include/rocksdb/version.h | cut -d ' ' -f 3)
 ROCKSDB_MINOR = $(shell egrep "ROCKSDB_MINOR.[0-9]" include/rocksdb/version.h | cut -d ' ' -f 3)
@@ -682,7 +692,7 @@ all: $(LIBRARY) $(BENCHMARKS) tools tools_lib test_libs $(TESTS)
 
 all_but_some_tests: $(LIBRARY) $(BENCHMARKS) tools tools_lib test_libs $(SUBSET)
 
-static_lib: $(LIBRARY)
+static_lib: $(LIBRARY) $(LIBRARY_CONCORD)
 
 shared_lib: $(SHARED)
 
@@ -1015,6 +1025,7 @@ rocksdb.h rocksdb.cc: build_tools/amalgamate.py Makefile $(LIB_SOURCES) unity.cc
 
 clean:
 	rm -f $(BENCHMARKS) $(TOOLS) $(TESTS) $(LIBRARY) $(SHARED)
+	rm -f $(LIBBC) $(LIBWHOLE_BC) $(LIBLL) $(LIBOPT_LL) $(LIBCONCORD_LL) $(LIBRARY_CONCORD)
 	rm -rf $(CLEAN_FILES) ios-x86 ios-arm scan_build_report
 	$(FIND) . -name "*.[oda]" -exec rm -f {} \;
 	$(FIND) . -type f -regex ".*\.\(\(gcda\)\|\(gcno\)\)" -exec rm {} \;
@@ -1035,9 +1046,37 @@ package:
 # ---------------------------------------------------------------------------
 # 	Unit tests and tools
 # ---------------------------------------------------------------------------
-$(LIBRARY): $(LIBOBJECTS)
-	$(AM_V_AR)rm -f $@
-	$(AM_V_at)$(AR) $(ARFLAGS) $@ $(LIBOBJECTS)
+# $(LIBRARY): $(LIBOBJECTS)
+# 	$(AM_V_AR)rm -f $@
+# 	$(AM_V_at)$(AR) $(ARFLAGS) $@ $(LIBOBJECTS)
+
+OPT_CONFIG =  -postdomtree -mem2reg -indvars -loop-simplify -branch-prob -scalar-evolution
+CONCORD_MAIN = $(CURDIR)/../../../concord
+CONCORD_PASS = $(CONCORD_MAIN)/src/cache-line-pass/build/src/libConcordPass.so
+
+$(LIBRARY): $(LIBOPT_LL)
+	rm -f $@
+	$(CXX) -c -O3 -o $@ $<
+
+$(LIBRARY_CONCORD): $(LIBCONCORD_LL)
+	rm -f $@
+	$(CXX) -c -O3 -o $@ $<
+
+$(LIBCONCORD_LL): $(LIBOPT_LL)
+	rm -f $@
+	opt-$(LLVM_VERSION) -S -load $(CONCORD_PASS) -yield -o $@ $<
+
+$(LIBOPT_LL): $(LIBLL)
+	rm -f $@
+	opt-$(LLVM_VERSION) -S $(OPT_CONFIG) -o $@ $<
+
+$(LIBLL): $(LIBWHOLE_BC)
+	rm -f $@
+	llvm-dis-$(LLVM_VERSION) -o $@ $<
+
+$(LIBWHOLE_BC): $(LIBBC)
+	rm -f $@
+	llvm-link-$(LLVM_VERSION) -o $@ $^
 
 $(TOOLS_LIBRARY): $(BENCH_LIB_SOURCES:.cc=.o) $(TOOL_LIB_SOURCES:.cc=.o) $(LIB_SOURCES:.cc=.o) $(TESTUTIL)
 	$(AM_V_AR)rm -f $@
@@ -1896,11 +1935,20 @@ util/crc32c_ppc.o: util/crc32c_ppc.c
 util/crc32c_ppc_asm.o: util/crc32c_ppc_asm.S
 	$(AM_V_CC)$(CC) $(CFLAGS) -c $< -o $@
 endif
-.cc.o:
-	$(AM_V_CC)$(CXX) $(CXXFLAGS) -c $< -o $@ $(COVERAGEFLAGS)
+# .cc.o:
+# # $(AM_V_CC)$(CXX) $(CXXFLAGS) -c $< -o $@ $(COVERAGEFLAGS)
+# 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(COVERAGEFLAGS)
 
-.c.o:
-	$(AM_V_CC)$(CC) $(CFLAGS) -c $< -o $@
+%.bc: %.cc
+	$(CXX) -emit-llvm $(CXXFLAGS) -c $< -o $@ $(COVERAGEFLAGS)
+
+# .c.o:
+# # $(AM_V_CC)$(CC) $(CFLAGS) -c $< -o $@
+# 	$(CC) $(CFLAGS) -c $< -o $@
+
+%.bc: %.c
+	$(CC) -emit-llvm $(CFLAGS) -c $< -o $@
+
 endif
 # ---------------------------------------------------------------------------
 #  	Source files dependencies detection

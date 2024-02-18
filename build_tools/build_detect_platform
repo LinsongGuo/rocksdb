@@ -65,23 +65,43 @@ fi
 rm -f "$OUTPUT"
 touch "$OUTPUT"
 
+# if test -z "$CC"; then
+#     if [ -x "$(command -v cc)" ]; then
+#         CC=cc
+#     elif [ -x "$(command -v clang)" ]; then
+#         CC=clang
+#     else
+#         CC=cc
+#     fi
+# fi
+
+# if test -z "$CXX"; then
+#     if [ -x "$(command -v g++)" ]; then
+#         CXX=g++
+#     elif [ -x "$(command -v clang++)" ]; then
+#         CXX=clang++
+#     else
+#         CXX=g++
+#     fi
+# fi
+
 if test -z "$CC"; then
-    if [ -x "$(command -v cc)" ]; then
-        CC=cc
-    elif [ -x "$(command -v clang)" ]; then
-        CC=clang
+    if [ -x "$(command -v clang-11)" ]; then
+        CC=clang-11
+        echo "---------------------- Using clang" 
     else
         CC=cc
+        echo "---------------------- Using cc"
     fi
 fi
 
 if test -z "$CXX"; then
-    if [ -x "$(command -v g++)" ]; then
-        CXX=g++
-    elif [ -x "$(command -v clang++)" ]; then
-        CXX=clang++
+    if [ -x "$(command -v clang++-11)" ]; then
+        CXX=clang++-11
+        echo "---------------------- Using clang++"
     else
         CXX=g++
+        echo "---------------------- Using g++"
     fi
 fi
 
