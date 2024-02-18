@@ -140,10 +140,10 @@ private:
   // The private mutex.  Developers should always use Mutex() instead of
   // using this variable directly.
   port::Mutex mutex_;
-#ifdef ROCKSDB_SUPPORT_THREAD_LOCAL
-  // Thread local storage
-  static __thread ThreadData* tls_;
-#endif
+// #ifdef ROCKSDB_SUPPORT_THREAD_LOCAL
+//   // Thread local storage
+//   static __thread ThreadData* tls_;
+// #endif
 
   // Used to make thread exit trigger possible if !defined(OS_MACOSX).
   // Otherwise, used to retrieve thread data.
@@ -151,9 +151,9 @@ private:
 };
 
 
-#ifdef ROCKSDB_SUPPORT_THREAD_LOCAL
-__thread ThreadData* ThreadLocalPtr::StaticMeta::tls_ = nullptr;
-#endif
+// #ifdef ROCKSDB_SUPPORT_THREAD_LOCAL
+// __thread ThreadData* ThreadLocalPtr::StaticMeta::tls_ = nullptr;
+// #endif
 
 // Windows doesn't support a per-thread destructor with its
 // TLS primitives.  So, we build it manually by inserting a
@@ -327,10 +327,10 @@ ThreadLocalPtr::StaticMeta::StaticMeta()
 #if !defined(OS_WIN)
   static struct A {
     ~A() {
-#ifndef ROCKSDB_SUPPORT_THREAD_LOCAL
+//#ifndef ROCKSDB_SUPPORT_THREAD_LOCAL
       ThreadData* tls_ =
         static_cast<ThreadData*>(pthread_getspecific(Instance()->pthread_key_));
-#endif
+//#endif
       if (tls_) {
         OnThreadExit(tls_);
       }
@@ -365,13 +365,15 @@ void ThreadLocalPtr::StaticMeta::RemoveThreadData(
 }
 
 ThreadData* ThreadLocalPtr::StaticMeta::GetThreadLocal() {
-#ifndef ROCKSDB_SUPPORT_THREAD_LOCAL
+  // printf("********* GetThreadLocal\n");
+  #ifndef ROCKSDB_SUPPORT_THREAD_LOCAL
   // Make this local variable name look like a member variable so that we
   // can share all the code below
+  printf("########### CALL\n");
+  #endif
   ThreadData* tls_ =
       static_cast<ThreadData*>(pthread_getspecific(Instance()->pthread_key_));
-#endif
-
+  
   if (UNLIKELY(tls_ == nullptr)) {
     auto* inst = Instance();
     tls_ = new ThreadData(inst);
@@ -392,6 +394,7 @@ ThreadData* ThreadLocalPtr::StaticMeta::GetThreadLocal() {
       abort();
     }
   }
+  // printf("GetThreadLocal: %p\n", tls_);
   return tls_;
 }
 
@@ -415,6 +418,7 @@ void ThreadLocalPtr::StaticMeta::Reset(uint32_t id, void* ptr) {
 
 void* ThreadLocalPtr::StaticMeta::Swap(uint32_t id, void* ptr) {
   auto* tls = GetThreadLocal();
+  // printf("tls size: %d\n", tls->entries.size());
   if (UNLIKELY(id >= tls->entries.size())) {
     // Need mutex to protect entries access within ReclaimId
     MutexLock l(Mutex());

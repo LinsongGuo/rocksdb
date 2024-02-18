@@ -20,6 +20,8 @@
 #include <utility>
 #include <vector>
 
+// #define ROCKSDB_SUPPORT_THREAD_LOCAL 0
+
 #if !defined(ROCKSDB_LITE) && \
     !defined(NROCKSDB_THREAD_STATUS) && \
     defined(ROCKSDB_SUPPORT_THREAD_LOCAL)

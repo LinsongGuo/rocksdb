@@ -1074,8 +1074,8 @@ Status DBImpl::GetImpl(const ReadOptions& read_options,
   // Acquire SuperVersion
   SuperVersion* sv = GetAndRefSuperVersion(cfd);
 
-  TEST_SYNC_POINT("DBImpl::GetImpl:1");
-  TEST_SYNC_POINT("DBImpl::GetImpl:2");
+  // TEST_SYNC_POINT("DBImpl::GetImpl:1");
+  // TEST_SYNC_POINT("DBImpl::GetImpl:2");
 
   SequenceNumber snapshot;
   if (read_options.snapshot != nullptr) {
@@ -1107,8 +1107,8 @@ Status DBImpl::GetImpl(const ReadOptions& read_options,
                    ? versions_->LastSequence()
                    : versions_->LastPublishedSequence();
   }
-  TEST_SYNC_POINT("DBImpl::GetImpl:3");
-  TEST_SYNC_POINT("DBImpl::GetImpl:4");
+  // TEST_SYNC_POINT("DBImpl::GetImpl:3");
+  // TEST_SYNC_POINT("DBImpl::GetImpl:4");
 
   // Prepare to store a list of merge operations if merge occurs.
   MergeContext merge_context;

@@ -110,6 +110,7 @@ class PosixEnv : public Env {
     for (const auto tid : threads_to_join_) {
       pthread_join(tid, nullptr);
     }
+    // printf("~PosixEnv: %u\n", Env::Priority::TOTAL);
     for (int pool_id = 0; pool_id < Env::Priority::TOTAL; ++pool_id) {
       thread_pools_[pool_id].JoinAllThreads();
     }

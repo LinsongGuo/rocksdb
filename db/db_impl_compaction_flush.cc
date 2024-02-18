@@ -1301,6 +1301,7 @@ void DBImpl::SchedulePendingPurge(std::string fname, std::string dir_to_sync,
 }
 
 void DBImpl::BGWorkFlush(void* db) {
+  // printf("~~~~~~~ BGWorkFlush()\n");
   IOSTATS_SET_THREAD_POOL_ID(Env::Priority::HIGH);
   TEST_SYNC_POINT("DBImpl::BGWorkFlush");
   reinterpret_cast<DBImpl*>(db)->BackgroundCallFlush();
@@ -1308,6 +1309,7 @@ void DBImpl::BGWorkFlush(void* db) {
 }
 
 void DBImpl::BGWorkCompaction(void* arg) {
+  // printf("~~~~~~~ BGWorkCompaction()\n");
   CompactionArg ca = *(reinterpret_cast<CompactionArg*>(arg));
   delete reinterpret_cast<CompactionArg*>(arg);
   IOSTATS_SET_THREAD_POOL_ID(Env::Priority::LOW);
@@ -1407,6 +1409,8 @@ Status DBImpl::BackgroundFlush(bool* made_progress, JobContext* job_context,
 }
 
 void DBImpl::BackgroundCallFlush() {
+  // printf("@@@@@@@@ BackgroundCallFlush starts\n");  
+
   bool made_progress = false;
   JobContext job_context(next_job_id_.fetch_add(1), true);
 
@@ -1480,6 +1484,8 @@ void DBImpl::BackgroundCallFlush() {
 
 void DBImpl::BackgroundCallCompaction(PrepickedCompaction* prepicked_compaction,
                                       Env::Priority bg_thread_pri) {
+  
+  // printf("********** BackgroundCallCompaction starts\n");  
   bool made_progress = false;
   JobContext job_context(next_job_id_.fetch_add(1), true);
   TEST_SYNC_POINT("BackgroundCallCompaction:0");
@@ -1488,7 +1494,7 @@ void DBImpl::BackgroundCallCompaction(PrepickedCompaction* prepicked_compaction,
                        immutable_db_options_.info_log.get());
   {
     InstrumentedMutexLock l(&mutex_);
-
+    // printf("********** BackgroundCallCompaction\n");
     // This call will unlock/lock the mutex to wait for current running
     // IngestExternalFile() calls to finish.
     WaitForIngestFile();

@@ -17,6 +17,12 @@ MACHINE ?= $(shell uname -m)
 ARFLAGS = ${EXTRA_ARFLAGS} rs
 STRIPFLAGS = -S -x
 
+# CFLAGS += -DROCKSDB_SUPPORT_THREAD_LOCAL=0
+# CXXFLAGS += -DROCKSDB_SUPPORT_THREAD_LOCAL=0
+
+CFLAGS += -muintr
+CXXFLAGS += -muintr
+
 # Transform parallel LOG output into something more readable.
 perl_command = perl -n \
   -e '@a=split("\t",$$_,-1); $$t=$$a[8];'				\
@@ -92,6 +98,8 @@ endif
 ifeq ($(MAKECMDGOALS),rocksdbjavastaticpublish)
 	DEBUG_LEVEL=0
 endif
+
+# DEBUG_LEVEL=2
 
 # compile with -O2 if debug level is not 2
 ifneq ($(DEBUG_LEVEL), 2)
@@ -295,9 +303,9 @@ ifeq ($(PLATFORM), OS_OPENBSD)
 	WARNING_FLAGS += -Wno-unused-lambda-capture
 endif
 
-ifndef DISABLE_WARNING_AS_ERROR
-	WARNING_FLAGS += -Werror
-endif
+# ifndef DISABLE_WARNING_AS_ERROR
+# 	WARNING_FLAGS += -Werror
+# endif
 
 
 ifdef LUA_PATH
