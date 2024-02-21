@@ -692,7 +692,8 @@ all: $(LIBRARY) $(BENCHMARKS) tools tools_lib test_libs $(TESTS)
 
 all_but_some_tests: $(LIBRARY) $(BENCHMARKS) tools tools_lib test_libs $(SUBSET)
 
-static_lib: $(LIBRARY) $(LIBRARY_CONCORD)
+static_lib: $(LIBRARY) 
+# $(LIBRARY_CONCORD)
 
 shared_lib: $(SHARED)
 
