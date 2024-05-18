@@ -1051,7 +1051,7 @@ package:
 # 	$(AM_V_at)$(AR) $(ARFLAGS) $@ $(LIBOBJECTS)
 
 OPT_CONFIG =  -postdomtree -mem2reg -indvars -loop-simplify -branch-prob -scalar-evolution
-CONCORD_MAIN = $(CURDIR)/../../../concord
+CONCORD_MAIN = $(CURDIR)/concord
 CONCORD_PASS = $(CONCORD_MAIN)/src/cache-line-pass/build/src/libConcordPass.so
 
 $(LIBRARY): $(LIBOPT_LL)
