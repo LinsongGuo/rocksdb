@@ -517,7 +517,8 @@ if test -z "$PORTABLE"; then
   elif [ "$TARGET_OS" == "IOS" ]; then
     COMMON_FLAGS="$COMMON_FLAGS"
   elif [ "$TARGET_OS" != "AIX" ] && [ "$TARGET_OS" != "SunOS" ]; then
-    COMMON_FLAGS="$COMMON_FLAGS -march=native "
+    # COMMON_FLAGS="$COMMON_FLAGS -march=native "
+    COMMON_FLAGS="$COMMON_FLAGS "
   elif test "$USE_SSE"; then
     COMMON_FLAGS="$COMMON_FLAGS -msse4.2 -mpclmul"
   fi
@@ -533,7 +534,8 @@ $CXX $PLATFORM_CXXFLAGS $COMMON_FLAGS -x c++ - -o /dev/null 2>/dev/null <<EOF
   }
 EOF
 if [ "$?" = 0 ]; then
-  COMMON_FLAGS="$COMMON_FLAGS -DHAVE_SSE42"
+  # COMMON_FLAGS="$COMMON_FLAGS -DHAVE_SSE42"
+  COMMON_FLAGS="$COMMON_FLAGS"
 elif test "$USE_SSE"; then
   echo "warning: USE_SSE specified but compiler could not use SSE intrinsics, disabling"
   exit 1
@@ -550,7 +552,8 @@ $CXX $PLATFORM_CXXFLAGS $COMMON_FLAGS -x c++ - -o /dev/null 2>/dev/null <<EOF
   }
 EOF
 if [ "$?" = 0 ]; then
-  COMMON_FLAGS="$COMMON_FLAGS -DHAVE_PCLMUL"
+  # COMMON_FLAGS="$COMMON_FLAGS -DHAVE_PCLMUL"
+  COMMON_FLAGS="$COMMON_FLAGS"
 elif test "$USE_SSE"; then
   echo "warning: USE_SSE specified but compiler could not use PCLMUL intrinsics, disabling"
   exit 1
