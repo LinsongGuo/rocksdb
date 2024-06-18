@@ -13,6 +13,8 @@
 #define __STDC_FORMAT_MACROS
 #endif
 
+#include <immintrin.h>
+
 #include <inttypes.h>
 #include <vector>
 #include <string>
@@ -1050,11 +1052,21 @@ SuperVersion* ColumnFamilyData::GetThreadLocalSuperVersion(
     RecordTick(ioptions_.statistics, NUMBER_SUPERVERSION_ACQUIRES);
     SuperVersion* sv_to_delete = nullptr;
 
+    _clui();
+    if (sv == nullptr)
+    printf("sv: %p\n", sv);
+    else
+    printf("sv: %p %d %d\n", sv, sv->version_number, super_version_number_.load());
+    _stui();
+
     if (sv && sv->Unref()) {
       RecordTick(ioptions_.statistics, NUMBER_SUPERVERSION_CLEANUPS);
       db_mutex->Lock();
       // NOTE: underlying resources held by superversion (sst files) might
       // not be released until the next background job.
+      _clui();
+      printf("sv->cleanup");
+      _stui();
       sv->Cleanup();
       sv_to_delete = sv;
     } else {
