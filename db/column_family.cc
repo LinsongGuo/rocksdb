@@ -1052,13 +1052,13 @@ SuperVersion* ColumnFamilyData::GetThreadLocalSuperVersion(
     RecordTick(ioptions_.statistics, NUMBER_SUPERVERSION_ACQUIRES);
     SuperVersion* sv_to_delete = nullptr;
 
-    // _clui();
+    /*
     if (sv == nullptr)
     printf("sv: %p\n", sv);
     else
     printf("sv: %p %d %d\n", sv, sv->version_number, super_version_number_.load());
-    // _stui();
-
+    */
+  
     if (sv && sv->Unref()) {
       RecordTick(ioptions_.statistics, NUMBER_SUPERVERSION_CLEANUPS);
       db_mutex->Lock();
@@ -1073,7 +1073,7 @@ SuperVersion* ColumnFamilyData::GetThreadLocalSuperVersion(
       db_mutex->Lock();
     }
     sv = super_version_->Ref();
-    printf("got: %p %d\n", sv, sv->version_number);
+    // printf("got: %p %d\n", sv, sv->version_number);
     db_mutex->Unlock();
 
     delete sv_to_delete;

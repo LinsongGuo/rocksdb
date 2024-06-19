@@ -41,18 +41,18 @@ static void GetJemallocStatus(void* mstat_arg, const char* status) {
 }
 #endif  // ROCKSDB_JEMALLOC
 
-#ifdef ROCKSDB_JEMALLOC
-void DumpMallocStats(std::string* stats) {
-  MallocStatus mstat;
-  const unsigned int kMallocStatusLen = 1000000;
-  std::unique_ptr<char[]> buf{new char[kMallocStatusLen + 1]};
-  mstat.cur = buf.get();
-  mstat.end = buf.get() + kMallocStatusLen;
-  je_malloc_stats_print(GetJemallocStatus, &mstat, "");
-  stats->append(buf.get());
-}
-#else
+// #ifdef ROCKSDB_JEMALLOC
+// void DumpMallocStats(std::string* stats) {
+//   MallocStatus mstat;
+//   const unsigned int kMallocStatusLen = 1000000;
+//   std::unique_ptr<char[]> buf{new char[kMallocStatusLen + 1]};
+//   mstat.cur = buf.get();
+//   mstat.end = buf.get() + kMallocStatusLen;
+//   je_malloc_stats_print(GetJemallocStatus, &mstat, "");
+//   stats->append(buf.get());
+// }
+// #else
 void DumpMallocStats(std::string*) {}
-#endif  // ROCKSDB_JEMALLOC
+// #endif  // ROCKSDB_JEMALLOC
 }
 #endif  // !ROCKSDB_LITE
