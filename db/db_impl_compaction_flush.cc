@@ -1480,8 +1480,6 @@ void DBImpl::BackgroundCallFlush() {
 
 void DBImpl::BackgroundCallCompaction(PrepickedCompaction* prepicked_compaction,
                                       Env::Priority bg_thread_pri) {
-  
-  // printf("********** BackgroundCallCompaction starts\n");  
   bool made_progress = false;
   JobContext job_context(next_job_id_.fetch_add(1), true);
   TEST_SYNC_POINT("BackgroundCallCompaction:0");
@@ -1490,7 +1488,6 @@ void DBImpl::BackgroundCallCompaction(PrepickedCompaction* prepicked_compaction,
                        immutable_db_options_.info_log.get());
   {
     InstrumentedMutexLock l(&mutex_);
-    // printf("********** BackgroundCallCompaction\n");
     // This call will unlock/lock the mutex to wait for current running
     // IngestExternalFile() calls to finish.
     WaitForIngestFile();
