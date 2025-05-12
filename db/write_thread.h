@@ -130,6 +130,8 @@ class WriteThread {
     Status status;            // status of memtable inserter
     Status callback_status;   // status returned by callback->Callback()
 
+    port::Mutex mu_;
+    port::CondVar cv_;
     std::aligned_storage<sizeof(std::mutex)>::type state_mutex_bytes;
     std::aligned_storage<sizeof(std::condition_variable)>::type state_cv_bytes;
     Writer* link_older;  // read/write only before linking, or as leader
@@ -150,6 +152,7 @@ class WriteThread {
           state(STATE_INIT),
           write_group(nullptr),
           sequence(kMaxSequenceNumber),
+          cv_(&mu_),
           link_older(nullptr),
           link_newer(nullptr) {}
 
@@ -171,13 +174,16 @@ class WriteThread {
           state(STATE_INIT),
           write_group(nullptr),
           sequence(kMaxSequenceNumber),
+          cv_(&mu_),
           link_older(nullptr),
           link_newer(nullptr) {}
 
     ~Writer() {
       if (made_waitable) {
+#if 0
         StateMutex().~mutex();
         StateCV().~condition_variable();
+#endif
       }
     }
 

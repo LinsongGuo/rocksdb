@@ -32,18 +32,27 @@ uint8_t WriteThread::BlockingAwaitState(Writer* w, uint8_t goal_mask) {
   // STATE_LOCKED_WAITING state.  The waker won't try to touch the mutex
   // or the condvar unless they CAS away the STATE_LOCKED_WAITING that
   // we install below.
+#if 0
   w->CreateMutex();
+#endif
 
   auto state = w->state.load(std::memory_order_acquire);
   assert(state != STATE_LOCKED_WAITING);
   if ((state & goal_mask) == 0 &&
       w->state.compare_exchange_strong(state, STATE_LOCKED_WAITING)) {
     // we have permission (and an obligation) to use StateMutex
+#if 0
     std::unique_lock<std::mutex> guard(w->StateMutex());
     w->StateCV().wait(guard, [w] {
       return w->state.load(std::memory_order_relaxed) != STATE_LOCKED_WAITING;
     });
+#endif
+    w->mu_.Lock();
+    while (w->state.load(std::memory_order_relaxed) == STATE_LOCKED_WAITING) {
+      w->cv_.Wait();
+    }
     state = w->state.load(std::memory_order_relaxed);
+    w->mu_.Unlock();
   }
   // else tricky.  Goal is met or CAS failed.  In the latter case the waker
   // must have changed the state, and compare_exchange_strong has updated
@@ -207,10 +216,17 @@ void WriteThread::SetState(Writer* w, uint8_t new_state) {
       !w->state.compare_exchange_strong(state, new_state)) {
     assert(state == STATE_LOCKED_WAITING);
 
+#if 0
     std::lock_guard<std::mutex> guard(w->StateMutex());
+#endif
+    w->mu_.Lock();
     assert(w->state.load(std::memory_order_relaxed) != new_state);
     w->state.store(new_state, std::memory_order_relaxed);
+#if 0
     w->StateCV().notify_one();
+#endif
+    w->cv_.Signal();
+    w->mu_.Unlock();
   }
 }
 
@@ -519,8 +535,13 @@ bool WriteThread::CompleteParallelMemTableWriter(Writer* w) {
 
   auto* write_group = w->write_group;
   if (!w->status.ok()) {
+#if 0
     std::lock_guard<std::mutex> guard(write_group->leader->StateMutex());
+#endif
+
+    write_group->leader->mu_.Lock();
     write_group->status = w->status;
+    write_group->leader->mu_.Unlock();
   }
 
   if (write_group->running-- > 1) {
