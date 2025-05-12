@@ -149,7 +149,6 @@ inline
 ThreadPoolImpl::Impl::~Impl() { assert(bgthreads_.size() == 0U); }
 
 void ThreadPoolImpl::Impl::JoinThreads(bool wait_for_jobs_to_complete) {
-  // printf("######## JoinThreads: %p\n", &mu_);
   std::unique_lock<std::mutex> lock(mu_);
   assert(!exit_all_threads_);
 
@@ -190,7 +189,6 @@ void ThreadPoolImpl::Impl::BGThread(size_t thread_id) {
   bool low_cpu_priority = false;
 
   while (true) {
-    // printf("######## BGThread: %p\n", &mu_);
 // Wait until there is an item that is ready to run
     std::unique_lock<std::mutex> lock(mu_);
     // Stop waiting if the thread needs to do work or needs to terminate.
@@ -224,7 +222,6 @@ void ThreadPoolImpl::Impl::BGThread(size_t thread_id) {
 
     auto func = std::move(queue_.front().function);
     queue_.pop_front();
-    // printf("######## queue_.pop_front();\n");
 
     queue_len_.store(static_cast<unsigned int>(queue_.size()),
                      std::memory_order_relaxed);
@@ -267,9 +264,7 @@ void ThreadPoolImpl::Impl::BGThread(size_t thread_id) {
     (void)decrease_cpu_priority;
 #endif
     func();
-    //  printf("~~~~~~~~ func ends;\n");
   }
-  // printf("######## BGThread returns\n");
 }
 
 // Helper struct for passing arguments when creating threads.
@@ -315,7 +310,6 @@ void* ThreadPoolImpl::Impl::BGThreadWrapper(void* arg) {
 
 void ThreadPoolImpl::Impl::SetBackgroundThreadsInternal(int num,
   bool allow_reduce) {
-  // printf("######## SetBackgroundThreadsInternal: %p\n", &mu_);
   std::unique_lock<std::mutex> lock(mu_);
   if (exit_all_threads_) {
     lock.unlock();
@@ -330,7 +324,6 @@ void ThreadPoolImpl::Impl::SetBackgroundThreadsInternal(int num,
 }
 
 int ThreadPoolImpl::Impl::GetBackgroundThreads() {
-  // printf("######## GetBackgroundThreads: %p\n", &mu_);
   std::unique_lock<std::mutex> lock(mu_);
   return total_threads_limit_;
 }
@@ -338,8 +331,6 @@ int ThreadPoolImpl::Impl::GetBackgroundThreads() {
 void ThreadPoolImpl::Impl::StartBGThreads() {
   // Start background thread if necessary
   while ((int)bgthreads_.size() < total_threads_limit_) {
-    // printf("$$$$$$$$ StartBGThreads\n");
-  
     port::Thread p_t(&BGThreadWrapper,
       new BGThreadMetadata(this, bgthreads_.size()));
 
@@ -363,7 +354,6 @@ void ThreadPoolImpl::Impl::StartBGThreads() {
 
 void ThreadPoolImpl::Impl::Submit(std::function<void()>&& schedule,
   std::function<void()>&& unschedule, void* tag) {
-  // printf("######## Submit\n");
   std::lock_guard<std::mutex> lock(mu_);
 
   if (exit_all_threads_) {
